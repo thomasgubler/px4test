@@ -3,8 +3,13 @@ require 'json'
 require 'octokit'
 require 'open3'
 require 'fileutils'
+require 'yaml'
 
-#You can write Visual-Basic in any language!
+config = begin
+  YAML.load(File.open(".hans.yml"))
+rescue ArgumentError => e
+  puts "Could not parse .hans.yml: #{e.message}"
+end
 
 set :bind, '0.0.0.0'
 set :environment, :production
@@ -12,8 +17,8 @@ set :environment, :production
 set :server, :thin
 set :port, 4567
 
-$ACCESS_TOKEN = ENV['GITTOKEN']
-fork = ENV['PX4FORK']
+$access_token = config['github']['token']
+$test_host = config['hostname']
 
 $lf = '.lockfile'
 
@@ -94,8 +99,8 @@ end
 
 def set_PR_Status (repo, sha, prstatus, description)
 
-  puts "Access token: " + $ACCESS_TOKEN
-  client = Octokit::Client.new(:access_token => $ACCESS_TOKEN)
+  puts "Access token: " + $access_token
+  client = Octokit::Client.new(:access_token => $access_token)
   # XXX replace the URL below with the web server status details URL
   options = {
     "state" => prstatus,
@@ -130,9 +135,9 @@ if pid.nil? then
   puts "HW TEST RESULT:" + $?.exitstatus.to_s
 
   if ($?.exitstatus == 0) then
-    set_PR_Status full_repo_name, sha, 'success', 'Hardware test on Pixhawk passed!'
+    set_PR_Status full_repo_name, sha, 'success', '#{$test_host}: Hardware test on Pixhawk passed!'
   else
-    set_PR_Status full_repo_name, sha, 'failure', 'Hardware test on Pixhawk FAILED!'
+    set_PR_Status full_repo_name, sha, 'failure', '#{$test_host}: Hardware test on Pixhawk FAILED!'
   end
 
   # Clean up by deleting the work directory
