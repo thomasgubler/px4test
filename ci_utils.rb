@@ -52,10 +52,16 @@ mail = Mail.new do
   from     "PX4 Hardware Test  <#{sender}>"
   to       "#{contributor} <#{email}>"
   cc       cc1 + "," + cc2
-  subject  "On-hardware test for #{branch} on #{full_repo_name} (#{sha})"
+  if success
+    result_tag = "Success"
+  else
+    result_tag = "Fail"
+  end
+  subject = "#{result_tag}: On-hardware test for #{branch} on"\
+            " #{full_repo_name} (#{sha})"
 
   puts "Sender: " + from.to_s
-  
+
   html_part do
     content_type 'text/html; charset=UTF-8'
     content_transfer_encoding 'quoted-printable'
